@@ -1,49 +1,32 @@
-from langchain.chains import LLMChain
-from langchain.llms.bedrock import Bedrock
-from langchain.prompts import PromptTemplate
-import boto3
-import os
 import streamlit as st
-
-os.environ["AWS_PROFILE"] = "Muhammad Chaudhry"
-
-#bedrock client
-
-bedrock_client = boto3.client(
-    service_name="bedrock-runtime",
-    region_name="us-east-1"
-)
-
-modelID = "anthropic.claude-v2"
-
-
-llm = Bedrock(
-    model_id=modelID,
-    client=bedrock_client,
-    model_kwargs={"max_tokens_to_sample": 2000,"temperature":0.9}
-)
-
-def my_chatbot(language,freeform_text):
-    prompt = PromptTemplate(
-        input_variables=["language", "freeform_text"],
-        template="You are a chatbot. You are in {language}.\n\n{freeform_text}"
-    )
-
-    bedrock_chain = LLMChain(llm=llm, prompt=prompt)
-
-    response=bedrock_chain({'language':language, 'freeform_text':freeform_text})
-    return response
+import requests
 
 st.title("Sarim Bot")
 
-language = st.sidebar.selectbox("Language", ["english", "spanish"])
+language = st.sidebar.selectbox("Language", ["English", "Spanish"])
+uploaded_file = st.sidebar.file_uploader("Upload a PDF file", type="pdf")
 
+if uploaded_file is not None:
+    files = {'file': uploaded_file.getvalue()}
+    response = requests.post("http://localhost:8000/upload_pdf", files=files)
+    knowledge_base = response.json()["knowledge_base"]
+else:
+    knowledge_base = ""
 
+freeform_text = st.sidebar.text_area(label="What is your question?", max_chars=100, key="freeform_text_input")
 
-if language:
-    freeform_text = st.sidebar.text_area(label="what is your question?",
-    max_chars=100)
-
-if freeform_text:
-    response = my_chatbot(language,freeform_text)
-    st.write(response['text'])
+if st.sidebar.button("Ask Question"):
+    if freeform_text:
+        query = {
+            "language": language,
+            "freeform_text": freeform_text,
+            "knowledge_base": knowledge_base
+        }
+        response = requests.post("http://localhost:8000/ask", json=query)
+        result = response.json()["response"]
+        st.markdown(f"""
+        <div style='padding: 10px; background-color: #262730; border-radius: 10px; margin: 10px 0;'>
+            {result}
+        </div>
+        """, unsafe_allow_html=True)
+        freeform_text = ""
