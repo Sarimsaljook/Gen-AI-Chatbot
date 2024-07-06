@@ -45,6 +45,7 @@ class QueryRequest(BaseModel):
 @app.post("/ask")
 def ask_question(query: QueryRequest):
     response = my_chatbot(query.language, query.freeform_text, query.knowledge_base)
+    print(response)
     return {"response": response}
 
 @app.post("/upload_pdf")

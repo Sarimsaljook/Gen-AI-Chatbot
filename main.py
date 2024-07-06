@@ -8,7 +8,7 @@ uploaded_file = st.sidebar.file_uploader("Upload a PDF file", type="pdf")
 
 if uploaded_file is not None:
     files = {'file': uploaded_file.getvalue()}
-    response = requests.post("http://localhost:8000/upload_pdf", files=files)
+    response = requests.post("https://a48d-70-18-228-97.ngrok-free.app/upload_pdf", files=files)
     knowledge_base = response.json()["knowledge_base"]
 else:
     knowledge_base = ""
@@ -22,11 +22,11 @@ if st.sidebar.button("Ask Question"):
             "freeform_text": freeform_text,
             "knowledge_base": knowledge_base
         }
-        response = requests.post("http://localhost:8000/ask", json=query)
+        response = requests.post("https://a48d-70-18-228-97.ngrok-free.app/ask", json=query)
         result = response.json()["response"]
         st.markdown(f"""
         <div style='padding: 10px; background-color: #262730; border-radius: 10px; margin: 10px 0;'>
-            {result}
+            {result["knowledge_base"]}
         </div>
         """, unsafe_allow_html=True)
         freeform_text = ""
